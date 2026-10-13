@@ -6,5 +6,4 @@ public record OrderItemResponse(
     String name,
     Integer quantity,
     BigDecimal unitPrice
-) {
-}
+) {}

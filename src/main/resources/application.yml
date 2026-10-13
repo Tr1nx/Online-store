@@ -2,29 +2,18 @@ spring:
   application:
     name: online-store-api
   datasource:
-    url: ${DB_URL:jdbc:postgresql://localhost:5432/online_store}
-    username: ${DB_USERNAME:online_store}
+    url: jdbc:postgresql://localhost:5432/online_store
+    username: online_store
     password: ${DB_PASSWORD:online_store}
-    driver-class-name: org.postgresql.Driver
   jpa:
     hibernate:
-      ddl-auto: validate
+      ddl-auto: none
     open-in-view: false
     properties:
       hibernate:
         format_sql: true
-  flyway:
-    enabled: true
-    locations: classpath:db/migration
-
-management:
-  endpoints:
-    web:
-      exposure:
-        include: health,info,metrics
-  endpoint:
-    health:
-      show-details: when_authorized
+  liquibase:
+    changelog: classpath:db/changelog/db.changelog-master.yaml
 
 logging:
   level:

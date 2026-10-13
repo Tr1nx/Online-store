@@ -1,0 +1,136 @@
+databaseChangeLog:
+  - changeSet:
+      id: create-orders-table
+      author: trinity
+      changes:
+        - createTable:
+            tableName: orders
+            columns:
+              - column:
+                  name: id
+                  type: BIGSERIAL
+                  constraints:
+                    primaryKey: true
+                    nullable: false
+              - column:
+                  name: order_number
+                  type: VARCHAR(50)
+                  constraints:
+                    nullable: false
+                    unique: true
+              - column:
+                  name: status
+                  type: VARCHAR(30)
+                  constraints:
+                    nullable: false
+              - column:
+                  name: created_at
+                  type: TIMESTAMP
+                  constraints:
+                    nullable: false
+
+        - createIndex:
+            indexName: idx_orders_created_at
+            tableName: orders
+            columns:
+              - column:
+                  name: created_at
+
+  - changeSet:
+      id: create-order-items-table
+      author: trinity
+      changes:
+        - createTable:
+            tableName: order_items
+            columns:
+              - column:
+                  name: id
+                  type: BIGSERIAL
+                  constraints:
+                    primaryKey: true
+                    nullable: false
+              - column:
+                  name: order_id
+                  type: BIGINT
+                  constraints:
+                    nullable: false
+              - column:
+                  name: name
+                  type: VARCHAR(255)
+                  constraints:
+                    nullable: false
+              - column:
+                  name: quantity
+                  type: INTEGER
+                  constraints:
+                    nullable: false
+              - column:
+                  name: unit_price
+                  type: NUMERIC(19,2)
+                  constraints:
+                    nullable: false
+
+        - sql:
+            sql: |
+              ALTER TABLE order_items
+              ADD CONSTRAINT chk_order_items_quantity_positive CHECK (quantity > 0);
+
+        - sql:
+            sql: |
+              ALTER TABLE order_items
+              ADD CONSTRAINT chk_order_items_unit_price_positive CHECK (unit_price >= 0);
+
+        - addForeignKeyConstraint:
+            baseTableName: order_items
+            baseColumnNames: order_id
+            referencedTableName: orders
+            referencedColumnNames: id
+            constraintName: fk_order_items_order
+            onDelete: CASCADE
+
+        - createIndex:
+            indexName: idx_order_items_order_id
+            tableName: order_items
+            columns:
+              - column:
+                  name: order_id
+
+  - changeSet:
+      id: seed-orders
+      author: trinity
+      changes:
+        - sql:
+            sql: |
+              INSERT INTO orders (order_number, status, created_at)
+              VALUES ('ORDER-1', 'CREATED', '2026-10-09T10:30:00');
+
+  - changeSet:
+      id: seed-order-items
+      author: trinity
+      changes:
+        - sql:
+            sql: |
+              INSERT INTO order_items (order_id, name, quantity, unit_price)
+              VALUES
+                ((SELECT id FROM orders WHERE order_number = 'ORDER-1'), 'Jeans', 1, 40.00),
+                ((SELECT id FROM orders WHERE order_number = 'ORDER-1'), 'Hoodie', 2, 30.00);
+
+  - changeSet:
+      id: seed-orders-2
+      author: trinity
+      changes:
+        - sql:
+            sql: |
+              INSERT INTO orders (order_number, status, created_at)
+              VALUES ('ORDER-2', 'CREATED', '2026-10-10T14:00:00');
+
+  - changeSet:
+      id: seed-order-items-2
+      author: trinity
+      changes:
+        - sql:
+            sql: |
+              INSERT INTO order_items (order_id, name, quantity, unit_price)
+              VALUES
+                ((SELECT id FROM orders WHERE order_number = 'ORDER-2'), 'T-Shirt', 2, 20.00),
+                ((SELECT id FROM orders WHERE order_number = 'ORDER-2'), 'Sneakers', 1, 80.00);

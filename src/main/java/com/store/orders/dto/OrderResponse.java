@@ -8,5 +8,4 @@ public record OrderResponse(
     String status,
     LocalDateTime createdAt,
     List<OrderItemResponse> products
-) {
-}
+) {}

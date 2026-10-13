@@ -1,7 +1,9 @@
 package com.store.shared.exception;
 
 import jakarta.servlet.http.HttpServletRequest;
+import lombok.extern.slf4j.Slf4j;
 import org.springframework.http.HttpStatus;
+import org.springframework.http.ProblemDetail;
 import org.springframework.http.ResponseEntity;
 import org.springframework.validation.FieldError;
 import org.springframework.web.bind.MethodArgumentNotValidException;
@@ -11,47 +13,27 @@ import org.springframework.web.bind.annotation.RestControllerAdvice;
 import java.time.LocalDateTime;
 import java.util.List;
 
+@Slf4j
 @RestControllerAdvice
 public class GlobalExceptionHandler {
 
-    @ExceptionHandler(MethodArgumentNotValidException.class)
-    public ResponseEntity<ApiErrorResponse> handleValidation(
-        MethodArgumentNotValidException exception,
-        HttpServletRequest request
-    ) {
-        List<ApiErrorResponse.FieldErrorResponse> fieldErrors = exception.getBindingResult()
-            .getFieldErrors()
-            .stream()
-            .map(this::toFieldError)
-            .toList();
+    @ExceptionHandler(OrderNotFoundException.class)
+    public ResponseEntity<ProblemDetail> handleUnexpected(OrderNotFoundException exception) {
+        ProblemDetail pd = ProblemDetail.forStatus(HttpStatus.NOT_FOUND);
+        pd.setTitle("Order Not Found");
+        pd.setDetail(exception.getMessage());
 
-        return ResponseEntity.badRequest().body(
-            new ApiErrorResponse(
-                LocalDateTime.now(),
-                HttpStatus.BAD_REQUEST.value(),
-                "Validation failed",
-                "Request contains invalid fields",
-                request.getRequestURI(),
-                fieldErrors
-            )
-        );
+        log.warn("Order Not Found: {}", exception.getMessage());
+        return ResponseEntity.status(HttpStatus.NOT_FOUND).body(pd);
     }
 
     @ExceptionHandler(Exception.class)
-    public ResponseEntity<ApiErrorResponse> handleUnexpected(Exception exception, HttpServletRequest request) {
-        return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR).body(
-            new ApiErrorResponse(
-                LocalDateTime.now(),
-                HttpStatus.INTERNAL_SERVER_ERROR.value(),
-                "Internal Server Error",
-                exception.getMessage(),
-                request.getRequestURI(),
-                List.of()
-            )
-        );
-    }
+    public ResponseEntity<ProblemDetail> handleUnexpected(Exception exception) {
+        ProblemDetail pd = ProblemDetail.forStatus(HttpStatus.INTERNAL_SERVER_ERROR);
+        pd.setTitle("Internal Server Error");
+        pd.setDetail("An unexpected error occurred");
 
-    private ApiErrorResponse.FieldErrorResponse toFieldError(FieldError fieldError) {
-        return new ApiErrorResponse.FieldErrorResponse(fieldError.getField(), fieldError.getDefaultMessage());
+        log.error("Unexpected error occurred", exception);
+        return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR).body(pd);
     }
 }

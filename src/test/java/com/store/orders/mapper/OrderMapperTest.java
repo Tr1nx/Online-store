@@ -17,8 +17,10 @@ class OrderMapperTest {
 
     @Test
     void shouldMapOrderToResponse() {
-        Order order = new Order("ORD-1001", OrderStatus.CREATED, LocalDateTime.parse("2026-10-09T10:30:00"));
+        Order order = new Order("ORD-1001");
+
         order.addItem(new OrderItem("Laptop", 1, new BigDecimal("1200.00")));
+
         order.addItem(new OrderItem("Mouse", 2, new BigDecimal("25.00")));
 
         OrderResponse response = orderMapper.toResponse(order);
@@ -26,6 +28,6 @@ class OrderMapperTest {
         assertThat(response.orderNumber()).isEqualTo("ORD-1001");
         assertThat(response.status()).isEqualTo("CREATED");
         assertThat(response.products()).hasSize(2);
-        assertThat(response.products().get(0).name()).isEqualTo("Laptop");
+        assertThat(response.products().getFirst().name()).isEqualTo("Laptop");
     }
 }
